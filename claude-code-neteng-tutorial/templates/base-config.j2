@@ -1,0 +1,48 @@
+! ========================================
+! Base configuration: {{ device.hostname }}
+! Site: {{ device.site }}
+! Role: {{ device.role }}
+! ========================================
+!
+hostname {{ device.hostname }}
+!
+service timestamps debug datetime msec localtime
+service timestamps log datetime msec localtime
+service password-encryption
+no ip domain-lookup
+ip domain name {{ site.domain }}
+!
+logging buffered 64000 informational
+!
+ip ssh version 2
+crypto key generate rsa modulus 4096
+!
+banner motd ^
+***********************************************
+* AUTHORIZED ACCESS ONLY                      *
+* All activity is monitored and recorded.     *
+* Disconnect immediately if not authorized.   *
+***********************************************
+^
+!
+{% for ntp in site.ntp_servers -%}
+ntp server {{ ntp }}
+{% endfor -%}
+!
+{% for dns in site.dns_servers -%}
+ip name-server {{ dns }}
+{% endfor -%}
+!
+interface Loopback0
+ description Router-ID / Management
+ ip address {{ device.loopback0 | replace('/32', '') }} 255.255.255.255
+!
+interface Vlan{{ device.management_vlan }}
+ description Management
+ ip address {{ device.management_ip }} 255.255.255.0
+ no shutdown
+!
+login on-failure log
+login on-success log
+!
+end
